@@ -150,6 +150,7 @@ public class BMgr {
         先在被固定的页面中搜索可用位为0的页面
         如果找到被固定页面中的可用页面pageId
         那么该页面pageId将被重用
+        937421896@qq.com
          */
         for (int pageId = 0; pageId < dsMgr.getNumPages(); pageId++) {
             if (dsMgr.getUse(pageId) == 0) {
