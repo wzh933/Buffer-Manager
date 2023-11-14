@@ -5,7 +5,7 @@ package cs.adb.wzh.StorageForm;
  * @date 2023/11/14
  **/
 public class Page {
-    private final int PAGE_SIZE = 4097;
+    private final int PAGE_SIZE = 4096;
     private char[] field;
 
     public int getFrameSize() {
