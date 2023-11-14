@@ -1,6 +1,7 @@
 package cs.adb.wzh.bufferManager;
 
 import cs.adb.wzh.Storage.Buffer;
+import cs.adb.wzh.Storage.Disk;
 import cs.adb.wzh.bufferControlBlocks.BCB;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +13,8 @@ class BMgrTest {
     @Test
     void bMgrTest() throws Exception {
         Buffer bf = new Buffer(8);
-        BMgr bMgr = new BMgr(bf, "src/main/resources/testTxt1.txt");
+        Disk disk = new Disk();
+        BMgr bMgr = new BMgr(bf, disk);
         for (BCB p = bMgr.getHead(); p.getFrameId() != -1; p = p.getNext()) {
             System.out.println(p.getFrameId());
         }
@@ -27,7 +29,8 @@ class BMgrTest {
     @Test
     void bcbTableTest() throws Exception {
         Buffer bf = new Buffer(8);
-        BMgr bMgr = new BMgr(bf, "src/main/resources/testTxt1.txt");
+        Disk disk = new Disk();
+        BMgr bMgr = new BMgr(bf, disk);
         BCB[] bcbTable = bMgr.getBcbTable();
         for (BCB bcb : bcbTable) {
             System.out.println(bcb.getFrameId());
@@ -41,7 +44,8 @@ class BMgrTest {
     @Test
     void bcbMove2HeadTest() throws Exception {
         Buffer bf = new Buffer(8);
-        BMgr bMgr = new BMgr(bf, "src/main/resources/testTxt1.txt");
+        Disk disk = new Disk();
+        BMgr bMgr = new BMgr(bf, disk);
         BCB[] bcbTable = bMgr.getBcbTable();
         bMgr.move2Head(bMgr.getTail().getPre());
         for (BCB p = bMgr.getHead(); p.getFrameId() != -1; p = p.getNext()) {

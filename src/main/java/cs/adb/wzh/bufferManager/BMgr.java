@@ -1,9 +1,11 @@
 package cs.adb.wzh.bufferManager;
 
+import cs.adb.wzh.Storage.Disk;
 import cs.adb.wzh.bucket.Bucket;
 import cs.adb.wzh.Storage.Buffer;
 
 import cs.adb.wzh.bufferControlBlocks.BCB;
+import cs.adb.wzh.dataStorageManager.DSMgr;
 import cs.adb.wzh.utils.pageRecordReader;
 
 import java.io.IOException;
@@ -13,6 +15,7 @@ import java.io.IOException;
  * @date 2023/11/12
  **/
 public class BMgr {
+    private DSMgr dsMgr;
     private int[] f2p;
     private Bucket[] p2f;
     private BCB head;
@@ -25,14 +28,16 @@ public class BMgr {
 //    private BCB freePageTail;
 
     //对页面的读写操作(operation, pageId)
-    private final pageRecordReader pageRecords;
+//    private final pageRecordReader pageRecords;
 
 
-    public BMgr(Buffer bf, String pageRequestsFilePath) throws IOException {
+    public BMgr(Buffer bf, Disk disk) throws IOException {
         this.bufSize = bf.getBufSize();
         this.freePageNum = bufSize;
 
-        this.pageRecords = new pageRecordReader(pageRequestsFilePath);
+        this.dsMgr = new DSMgr(disk);
+
+//        this.pageRecords = new pageRecordReader(pageRequestsFilePath);
 
         this.bcbTable = new BCB[bufSize];
         this.f2p = new int[bufSize];

@@ -20,4 +20,19 @@ public class ArrayListTest {
             System.out.println(a);
         }
     }
+
+    @Test
+    void initTest() {
+        final int[] array = new int[10];
+        for (int i = 0; i < 10; i++) {
+            System.out.println(array[i]);
+        }
+        for (int i = 0; i < 10; i++) {
+            array[i] = 1;
+        }
+        for (int i = 0; i < 10; i++) {
+            System.out.println(array[i]);
+        }
+    }
+
 }
