@@ -145,29 +145,30 @@ public class BMgr {
      *
      * @return 该page被分配到缓存区中的frameId
      */
-    public int fixNewPage() {
-        int pageId = 0;//读取本次操作的页号
-            /*
-          每次取空闲链表头指针指向的frame
-          占用该frame后其不再空闲
-          空闲链表头指针后移一位
-          当空闲链表头指针为null时缓存区满
+    public int fixNewPage() throws Exception {
+        /*
+        先在被固定的页面中搜索可用位为0的页面
+        如果找到被固定页面中的可用页面pageId
+        那么该页面pageId将被重用
          */
-        BCB curBCB = freePageHead;
-        this.freePageHead = this.freePageHead.getNext();
-        this.freePageNum--;
-
-        int frameId = curBCB.getFrameId();
-        curBCB.setPageId(pageId);
-
-        f2p[frameId] = pageId;
-
-        int page_index = hash(pageId);
-        p2f[page_index] = new Bucket();
-        p2f[page_index].appendBCB(curBCB);
-
-
-        return frameId;
+        for (int pageId = 0; pageId < dsMgr.getNumPages(); pageId++) {
+            if (dsMgr.getUse(pageId) == 0) {
+                return pageId;
+            }
+        }
+        /*
+        否则被固定的页面计数器+=1
+        并且从非固定页面中重新分配页面
+        并且置该页面的使用位为1
+        其中被分配的页面allocPageId为pageNum(pageId从0开始)
+         */
+        int allocPageId = dsMgr.getNumPages();
+        if (allocPageId >= dsMgr.getMaxPageNum()) {
+            throw new Exception("当前磁盘已满，无法分配新页面！");
+        }
+        dsMgr.setUse(allocPageId, 1);
+        dsMgr.incNumPages();
+        return allocPageId;
     }
 
     /**
