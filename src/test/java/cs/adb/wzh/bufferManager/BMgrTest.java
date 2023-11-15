@@ -52,4 +52,32 @@ class BMgrTest {
             System.out.println(p.getFrameId());
         }
     }
+
+    @Test
+    void fixPageTest() throws Exception {
+        Buffer bf = new Buffer(8);
+        Disk disk = new Disk();
+        BMgr bMgr = new BMgr(bf, disk);
+/*
+        //这样就会有”当前磁盘已满，无法分配新页面！“的警告
+        for (int i = 0; i < 65537; i++) {
+            System.out.println(bMgr.fixNewPage());
+        }
+        bMgr.fixNewPage();
+        bMgr.fixPage(10);
+*/
+        int fileLength = 50;
+        int[] pageIds = new int[fileLength];
+        for (int i = 0; i < fileLength; i++) {
+            pageIds[i] = bMgr.fixNewPage();
+//            System.out.println(pageIds[i]);
+        }
+//        System.out.println();
+        for (int i = 0; i < fileLength; i++) {
+//            System.out.println(pageIds[i]);
+            bMgr.fixPage(pageIds[i]);
+//            System.out.println(bMgr.fixPage(pageIds[i]));
+        }
+//        System.out.println(bMgr.getTail().getPre().getFrameId());
+    }
 }

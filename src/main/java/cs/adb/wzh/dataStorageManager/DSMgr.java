@@ -23,7 +23,7 @@ public class DSMgr {
     private final Buffer bf;
     private final Disk disk;
 
-    public DSMgr(Buffer bf, Disk disk) throws IOException {
+    public DSMgr(Buffer bf, Disk disk) {
         this.bf = bf;
         this.disk = disk;
         this.maxPageNum = disk.getDiskSize();
@@ -48,9 +48,18 @@ public class DSMgr {
     }
 
 
-    public int writePage(int frameId, Frame frame) {
+    public int writePage(int frameId) {
+        /*
+        1、通过frameId从帧缓存区中得到要被写入磁盘的帧frame
+        2、取出帧frame中的内容field
+        3、通过curFile的curRecordId得到将要写入的磁盘页面page
+        4、将帧frame中的内容filed写入磁盘页面page
+        5、返回此次被写入的字节数
+         */
+        Frame frame = this.bf.getBuf()[frameId];
         char[] field = frame.getField();
-        this.curFile.getFileRecord(0);
+        Page page = this.curFile.getFileRecord(this.curRecordId);
+        page.setField(field);
 
         return frame.getFrameSize();
     }

@@ -44,14 +44,16 @@ public class Bucket {
             for (int i = 0; i < curBucket.getBcbNum(); i++) {
                 if (curBucket.getBcbList().get(i) == bcb) {
                     curBucket.getBcbList().remove(i);
-                    for (Bucket nextBucket = curBucket; nextBucket.getNext() != null; nextBucket = nextBucket.getNext()) {
+//                    System.out.println(curBucket);
+                    for (Bucket curBucket1 = curBucket; curBucket1.getNext() != null; curBucket1 = curBucket1.getNext()) {
+//                        System.out.println(curBucket1);
                         //将下个桶中的首元素加入当前桶
-                        nextBucket.getBcbList().add(nextBucket.getNext().getBcbList().get(0));
+                        curBucket1.getBcbList().add(curBucket1.getNext().getBcbList().get(0));
                         //删除下个桶的首元素
-                        nextBucket.getNext().getBcbList().remove(0);
+                        curBucket1.getNext().getBcbList().remove(0);
                         //如果下个桶空则删除桶
-                        if (nextBucket.getNext().getBcbNum() == 0) {
-                            nextBucket.setNext(null);
+                        if (curBucket1.getNext().getBcbNum() == 0) {
+                            curBucket1.setNext(null);
                         }
                     }
                     break;

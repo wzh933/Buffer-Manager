@@ -1,6 +1,7 @@
 package cs.adb.wzh.bufferManager;
 
 import cs.adb.wzh.Storage.Disk;
+import cs.adb.wzh.StorageForm.Page;
 import cs.adb.wzh.bucket.Bucket;
 import cs.adb.wzh.Storage.Buffer;
 
@@ -22,9 +23,9 @@ public class BMgr {
     private BCB tail;
     private final BCB[] bcbTable;
     private final int bufSize;
-    private final int freePageNum;
-    //维护一个空闲页链表的头指针
-    private final BCB freePageHead;
+    private int freePageNum;
+    private final Buffer bf;
+    private final Disk disk;
 //    private BCB freePageTail;
 
     //对页面的读写操作(operation, pageId)
@@ -32,10 +33,13 @@ public class BMgr {
 
 
     public BMgr(Buffer bf, Disk disk) throws IOException {
+        this.bf = bf;
+        this.disk = disk;
         this.bufSize = bf.getBufSize();
         this.freePageNum = bufSize;
 
         this.dsMgr = new DSMgr(bf, disk);
+        this.dsMgr.openFile("data.dbf");
 
 //        this.pageRecords = new pageRecordReader(pageRequestsFilePath);
 
@@ -44,7 +48,6 @@ public class BMgr {
         this.p2f = new Bucket[bufSize];
 
         this.head = new BCB(-1);//增加一个frameId为-1的无效节点并在之后作为环形链表的尾结点
-        this.freePageHead = this.head;//开始时空闲链表头指针指向缓存区头指针
         BCB p = this.head, q;
         //初始化帧缓存区BCB的双向循环链表
         for (int i = 0; i < this.bufSize; i++) {
@@ -103,39 +106,67 @@ public class BMgr {
      * 如果是，则返回相应的frame_id
      * 如果页面尚未驻留在缓冲区中，则它会选择牺牲页面（如果需要），并加载所请求的页面。
      *
-     * @param pageId:
-     * @param protection:
-     * @return int
+     * @param pageId:需要被固定于缓存区的页号
+     * @return frameId:页面pageId被固定于缓存区的帧号
      */
-    public int fixPage(int pageId, int protection) throws Exception {
+    public int fixPage(int pageId) throws Exception {
+//        System.out.println(pageId);
+        Page page = this.dsMgr.readPage(pageId);
         if (this.p2f[this.hash(pageId)] == null) {//如果pageId对应的hash桶是空的则新建桶
             this.p2f[this.hash(pageId)] = new Bucket();
         }
         Bucket hashBucket = this.p2f[this.hash(pageId)];//找到pageId可能存放的hash桶
+//        System.out.println(pageId);
         BCB targetBCB = hashBucket.searchPage(pageId);//寻找hash桶中的页面
         if (targetBCB != null) {
             /*
             如果该页面存放在缓存区中
             那么将该页面置于循环链表的首部
              */
+//            System.out.println(targetBCB.getPageId());
+//            System.out.println();
             this.move2Head(targetBCB);
             return targetBCB.getFrameId();
         }
 
         /*
         如果该页面不在缓存区中
-        1、得到需要将要被置换(牺牲)的尾部页面victimBCB
-        2、将victimBCB从其原来的pageId对应的hash桶中删除
-        3、修改victimBCB原来的pageId为当前pageId
-        4、将victimBCB放入当前pageId对应的hash桶中
-        5、将victimBCB移到首部
+        a)该缓存区未满，则将该页面存放于缓存区的尾部并将其移动至首部
+        b)该缓存区已满，则执行淘汰规则：
+            1、得到需要将要被置换(牺牲)的尾部页面victimBCB和其帧号frameId
+            2、将victimBCB从其原来的pageId对应的hash桶中删除
+            3、修改victimBCB原来的pageId为当前pageId
+            4、将victimBCB放入当前pageId对应的hash桶中
+            5、将victimBCB移到首部
+            6、将帧frameId中的内容写入页面pageId中
          */
-        BCB victimBCB = this.bcbTable[this.selectVictim()];
-        this.p2f[this.hash(victimBCB.getPageId())].removeBCB(victimBCB);
-        victimBCB.setPageId(pageId);
-        hashBucket.appendBCB(victimBCB);
-        this.move2Head(victimBCB);
-        return victimBCB.getFrameId();
+        int frameId;
+//        System.out.println(freePageNum);
+        if (this.freePageNum > 0) {
+            frameId = this.bufSize - this.freePageNum;
+//            System.out.println(frameId);
+            BCB freeBCB = this.bcbTable[frameId];
+            freeBCB.setPageId(pageId);
+            this.move2Head(freeBCB);
+//            System.out.println(this.getHead().getFrameId());
+            this.freePageNum--;
+            this.p2f[this.hash(freeBCB.getPageId())].appendBCB(freeBCB);
+        } else {
+            frameId = this.selectVictim();
+            BCB victimBCB = this.bcbTable[frameId];
+//            System.out.println(frameId);
+//            System.out.println(bcbTable[frameId].getFrameId());
+//            System.out.println(this.hash(victimBCB.getPageId()));
+            this.p2f[this.hash(victimBCB.getPageId())].removeBCB(victimBCB);
+            victimBCB.setPageId(pageId);
+            System.out.printf("frameId:%d, pageId:%d\n", victimBCB.getFrameId(), victimBCB.getPageId());
+//            System.out.println(pageId);
+            hashBucket.appendBCB(victimBCB);
+            this.move2Head(victimBCB);
+            this.bf.getBuf()[frameId].setField(page.getField());
+        }
+        return frameId;
+
     }
 
 

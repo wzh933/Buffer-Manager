@@ -9,7 +9,7 @@ import cs.adb.wzh.StorageForm.Page;
  **/
 public class Buffer {
     private final int bufSize;
-    private Frame[] buf;
+    private final Frame[] buf;
 
     public int getBufSize() {
         return bufSize;
