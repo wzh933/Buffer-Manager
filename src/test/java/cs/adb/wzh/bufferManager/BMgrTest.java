@@ -73,15 +73,19 @@ class BMgrTest {
             pageIds[i] = bMgr.fixNewPage();
         }
 
-//        PageRequestReader prr = new PageRequestReader("src/main/resources/testTxt2.txt");
+//        PageRequestReader prr = new PageRequestReader("src/main/resources/testTxt1.txt");
         PageRequestReader prr = new PageRequestReader("src/main/resources/data-5w-50w-zipf.txt");
 
 
         for (int i = 0; i < prr.getRequestNum(); i++) {
+            bMgr.setOperation(prr.getOperation(i));
             bMgr.fixPage(prr.getPageId(i));
 //            bMgr.printBuffer();
         }
-        System.out.printf("%.3f%%", bMgr.getHitNum() / prr.getRequestNum() * 100);
+        bMgr.writeDirtys();
+        System.out.printf("%.3f%%\n", bMgr.getHitNum() / prr.getRequestNum() * 100);
+        System.out.printf("读磁盘次数：%d\n", bMgr.getReadDiskNum());
+        System.out.printf("写磁盘次数：%d\n", bMgr.getWriteDiskNum());
     }
 
 

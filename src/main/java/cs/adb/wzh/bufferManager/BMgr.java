@@ -28,7 +28,9 @@ public class BMgr {
     private int freePageNum;
     private final Buffer bf;
     private final Disk disk;
+
     private double hitNum = 0;
+    private int operation;//0-读 1-写
 //    private BCB freePageTail;
 
     //对页面的读写操作(operation, pageId)
@@ -112,6 +114,11 @@ public class BMgr {
      * @return frameId:页面pageId被固定于缓存区的帧号
      */
     public int fixPage(int pageId) throws Exception {
+        int frameId = this.fixPageLRU(pageId);//可以切换不同的策略进行页面的置换
+        this.bcbTable[frameId].setDirty(operation);//如果是写操作则将脏位设置为1(0-读 1-写)
+
+        return frameId;
+/*
         Page page = this.dsMgr.readPage(pageId);
         if (this.p2f[this.hash(pageId)] == null) {//如果pageId对应的hash桶是空的则新建桶
             this.p2f[this.hash(pageId)] = new Bucket();
@@ -123,14 +130,14 @@ public class BMgr {
             如果该页面存放在缓存区中
             那么命中次数加一
             同时将该页面置于循环链表的首部
-             */
+             * /
             this.hitNum++;
             this.move2Head(targetBCB);
             return targetBCB.getFrameId();
         }
 
         /*
-        如果该页面不在缓存区中
+        如果该页面不在缓存区中，则从磁盘读取该页并且执行如下的内存操作：
         a)该缓存区未满，则将该页面存放于缓存区的尾部并将其移动至首部
         b)该缓存区已满，则执行淘汰规则：
             1、得到需要将要被置换(牺牲)的尾部页面victimBCB和其帧号frameId
@@ -138,8 +145,9 @@ public class BMgr {
             3、修改victimBCB原来的pageId为当前pageId
             4、将victimBCB放入当前pageId对应的hash桶中
             5、将victimBCB移到首部
-            6、将帧frameId中的内容写入页面pageId中
-         */
+            6、如果该帧脏位为1，则将帧frameId中的内容写入页面pageId中
+         * /
+        this.dsMgr.readPage(pageId);
         int frameId;
         if (this.freePageNum > 0) {
             frameId = this.bufSize - this.freePageNum;
@@ -150,16 +158,19 @@ public class BMgr {
             this.p2f[this.hash(freeBCB.getPageId())].appendBCB(freeBCB);
         } else {
             frameId = this.selectVictim();
+            if (this.bcbTable[frameId].getDirty() == 1) {
+                this.dsMgr.writePage(frameId, this.bcbTable[frameId].getPageId());
+            }
             BCB victimBCB = this.bcbTable[frameId];
-//            this.p2f[this.hash(victimBCB.getPageId())].removeBCB(victimBCB);
-//            this.removeBCB(pageId);
             victimBCB.setPageId(pageId);
 //            System.out.printf("frameId: %d, pageId: %d\n", victimBCB.getFrameId(), victimBCB.getPageId());
             hashBucket.appendBCB(victimBCB);
-            this.move2Head(victimBCB);
-            this.bf.getBuf()[frameId].setField(page.getField());
+//            this.move2Head(victimBCB);
+
+//            this.bf.getBuf()[frameId].setField(page.getField());
         }
         return frameId;
+*/
 
     }
 
@@ -196,6 +207,59 @@ public class BMgr {
         dsMgr.setUse(allocPageId, 1);
         dsMgr.incNumPages();
         return allocPageId;
+    }
+
+    private int fixPageLRU(int pageId) throws Exception {
+        if (this.p2f[this.hash(pageId)] == null) {//如果pageId对应的hash桶是空的则新建桶
+            this.p2f[this.hash(pageId)] = new Bucket();
+        }
+        Bucket hashBucket = this.p2f[this.hash(pageId)];//找到pageId可能存放的hash桶
+        BCB targetBCB = hashBucket.searchPage(pageId);//寻找hash桶中的页面
+        if (targetBCB != null) {
+            /*
+            如果该页面存放在缓存区中
+            那么命中次数加一
+            同时将该页面置于循环链表的首部
+             */
+            this.hitNum++;
+            this.move2Head(targetBCB);
+            return targetBCB.getFrameId();
+        }
+
+        /*
+        如果该页面不在缓存区中，则从磁盘读取该页并且执行如下的内存操作：
+        a)该缓存区未满，则将该页面存放于缓存区的尾部并将其移动至首部
+        b)该缓存区已满，则执行淘汰规则：
+            1、得到需要将要被置换(牺牲)的尾部页面victimBCB和其帧号frameId
+            2、将victimBCB从其原来的pageId对应的hash桶中删除
+            3、修改victimBCB原来的pageId为当前pageId
+            4、将victimBCB放入当前pageId对应的hash桶中
+            5、将victimBCB移到首部
+            6、如果该帧脏位为1，则将帧frameId中的内容写入页面pageId中
+         */
+        Page page = this.dsMgr.readPage(pageId);
+        int frameId;
+        if (this.freePageNum > 0) {
+            frameId = this.bufSize - this.freePageNum;
+            BCB freeBCB = this.bcbTable[frameId];
+            freeBCB.setPageId(pageId);
+            this.move2Head(freeBCB);
+            this.freePageNum--;
+            this.p2f[this.hash(freeBCB.getPageId())].appendBCB(freeBCB);
+        } else {
+            frameId = this.selectVictim();
+            if (this.bcbTable[frameId].getDirty() == 1) {
+                this.dsMgr.writePage(frameId, this.bcbTable[frameId].getPageId());
+            }
+            BCB victimBCB = this.bcbTable[frameId];
+            victimBCB.setPageId(pageId);
+//            System.out.printf("frameId: %d, pageId: %d\n", victimBCB.getFrameId(), victimBCB.getPageId());
+            hashBucket.appendBCB(victimBCB);
+//            this.move2Head(victimBCB);
+
+//            this.bf.getBuf()[frameId].setField(page.getField());
+        }
+        return frameId;
     }
 
     /**
@@ -253,14 +317,23 @@ public class BMgr {
     public int removeLRUEle() throws Exception {
         //LRU策略选择尾部结点作为victimBCB
         BCB victimBCB = this.tail.getPre();
-        if (victimBCB.getDirty() == 1) {
-            this.writeDirtys();
-        }
+        //从hash表中删除BCB并在之后建立新的索引
         this.removeBCB(victimBCB.getPageId());
+        //将被淘汰结点放至首部并在之后重新设置其页号
+        this.move2Head(victimBCB);
         return victimBCB.getFrameId();
     }
 
     public void writeDirtys() {
+        /*
+        这键盘突然好了
+        我真是蚌埠住了
+         */
+        for (int frameId = 0; frameId < this.bufSize; frameId++) {
+            if (this.bcbTable[frameId].getDirty() == 1) {
+                this.dsMgr.writePage(frameId, this.bcbTable[frameId].getPageId());
+            }
+        }
 
     }
 
@@ -274,4 +347,18 @@ public class BMgr {
     public double getHitNum() {
         return hitNum;
     }
+
+    public void setOperation(int operation) {//0-读 1-写
+        this.operation = operation;
+    }
+
+    public int getReadDiskNum() {
+        return this.dsMgr.getReadDiskNum();
+    }
+
+    public int getWriteDiskNum() {
+        return this.dsMgr.getWriteDiskNum();
+    }
+
+
 }

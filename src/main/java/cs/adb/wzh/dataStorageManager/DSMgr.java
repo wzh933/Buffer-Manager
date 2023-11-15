@@ -22,6 +22,8 @@ public class DSMgr {
     private File curFile;
     private final Buffer bf;
     private final Disk disk;
+    private int readDiskNum = 0;
+    private int writeDiskNum = 0;
 
     public DSMgr(Buffer bf, Disk disk) {
         this.bf = bf;
@@ -44,24 +46,27 @@ public class DSMgr {
     }
 
     public Page readPage(int pageId) {
+        this.readDiskNum++;
         return this.disk.getDisk()[pageId];
     }
 
 
-    public int writePage(int frameId) {
+    public void writePage(int frameId,int pageId) {
         /*
         1、通过frameId从帧缓存区中得到要被写入磁盘的帧frame
         2、取出帧frame中的内容field
         3、通过curFile的curRecordId得到将要写入的磁盘页面page
         4、将帧frame中的内容filed写入磁盘页面page
-        5、返回此次被写入的字节数
+        5、写磁盘次数+1
+        6、返回此次被写入的字节数
          */
-        Frame frame = this.bf.getBuf()[frameId];
-        char[] field = frame.getField();
-        Page page = this.curFile.getFileRecord(this.curRecordId);
-        page.setField(field);
+//        Frame frame = this.bf.getBuf()[frameId];
+//        char[] field = frame.getField();
+//        Page page = this.curFile.getFileRecord(this.curRecordId);
+//        page.setField(field);
+        this.writeDiskNum++;
 
-        return frame.getFrameSize();
+//        return frame.getFrameSize();
     }
 
     /**
@@ -104,5 +109,13 @@ public class DSMgr {
 
     public int getMaxPageNum() {
         return maxPageNum;
+    }
+
+    public int getReadDiskNum() {
+        return readDiskNum;
+    }
+
+    public int getWriteDiskNum() {
+        return writeDiskNum;
     }
 }

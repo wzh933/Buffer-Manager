@@ -9,7 +9,7 @@ public class BCB {
     private final int frameId;
     private int latch;
     private int count;
-    private int dirty;
+    private int dirty = 0;
     private BCB next;
     private BCB pre;
 
@@ -22,17 +22,6 @@ public class BCB {
         this.frameId = frameId;
     }
 
-    public int getPageId() {
-        return pageId;
-    }
-
-    public int getFrameId() {
-        return frameId;
-    }
-
-    public int getDirty() {
-        return dirty;
-    }
 
     public void setPageId(int pageId) {
         this.pageId = pageId;
@@ -46,6 +35,10 @@ public class BCB {
         this.pre = pre;
     }
 
+    public void setDirty(int dirty) {
+        this.dirty = dirty;
+    }
+
 
     public BCB getNext() {
         return next;
@@ -54,6 +47,18 @@ public class BCB {
 
     public BCB getPre() {
         return pre;
+    }
+
+    public int getPageId() {
+        return pageId;
+    }
+
+    public int getFrameId() {
+        return frameId;
+    }
+
+    public int getDirty() {
+        return dirty;
     }
 
 

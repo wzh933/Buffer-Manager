@@ -34,18 +34,18 @@ RemoveBCB函数从数组中删除page_id的缓冲区控制块。只有当SelectV
 
 RemoveLRUEle函数从列表中删除LRU元素。
 
-***SetDirty(int frame_id)***
+* ***SetDirty(int frame_id)***
 
 SetDirty函数为frame_id设置脏位。此脏位用于了解是否写出帧。如果内容以任何方式被修改，则必须写入帧。这包括任何目录页和数据页。如果该位为1，则将写入该位。如果该位为零，则不会写入。
 
-***UnsetDirty(int frame_id)***
+* ***UnsetDirty(int frame_id)***
 
 UnsetDirty函数将对应frame_id的dirty_bit分配为零。调用此函数的主要原因是当setDirty（）函数已被调用但页面实际上是临时关系的一部分时。在这种情况下，实际上不需要写入页面，因为它不想被保存。
 
-***WriteDirtys()***
+* ***WriteDirtys()***
 
 系统关闭时必须调用WriteDirtys函数。该函数的目的是写出缓冲区中可能需要写入的任何页。只有当DIRESS_BIT为1时，它才会将页面写出到文件中。
 
-***PrintFrame(int frame_id)***
+* ***PrintFrame(int frame_id)***
 
 PrintFrame函数打印出由frame_id描述的帧的内容。
