@@ -35,6 +35,14 @@ public class Bucket {
         curBucket.getBcbList().add(bcb);//将BCB控制块放入当前桶中
     }
 
+
+/*
+    /**
+     * 虽然这段代码被我注释掉了，但是最开始我确实是用Bucket里自定义的remove方法删除BCB的，我想把它留着作纪念
+     *
+     * @param bcb:将要被删除的BCB
+     * @throws Exception:如果找不到要删除的BCB那就是代码出问题了
+     * /
     public void removeBCB(BCB bcb) throws Exception {
         if (this.searchPage(bcb.getPageId()) == null) {
             throw new Exception("找不到要删除的页，代码出错啦！");
@@ -62,6 +70,7 @@ public class Bucket {
             }
         }
     }
+*/
 
 
     /**

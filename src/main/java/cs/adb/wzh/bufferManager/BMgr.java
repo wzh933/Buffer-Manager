@@ -16,11 +16,14 @@ import java.io.IOException;
  **/
 public class BMgr {
     private final DSMgr dsMgr;
-    private final int[] f2p;
     private final Bucket[] p2f;
+    /*
+    有了BCB表之后就不需要f2p索引表了
+    其中bcbTable[frameId] = BCB(frameId)
+     */
+    private final BCB[] bcbTable;
     private BCB head;
     private BCB tail;
-    private final BCB[] bcbTable;
     private final int bufSize;
     private int freePageNum;
     private final Buffer bf;
@@ -44,7 +47,6 @@ public class BMgr {
 //        this.pageRecords = new pageRecordReader(pageRequestsFilePath);
 
         this.bcbTable = new BCB[bufSize];
-        this.f2p = new int[bufSize];
         this.p2f = new Bucket[bufSize];
 
         this.head = new BCB(-1);//增加一个frameId为-1的无效节点并在之后作为环形链表的尾结点
@@ -149,7 +151,8 @@ public class BMgr {
         } else {
             frameId = this.selectVictim();
             BCB victimBCB = this.bcbTable[frameId];
-            this.p2f[this.hash(victimBCB.getPageId())].removeBCB(victimBCB);
+//            this.p2f[this.hash(victimBCB.getPageId())].removeBCB(victimBCB);
+//            this.removeBCB(pageId);
             victimBCB.setPageId(pageId);
 //            System.out.printf("frameId: %d, pageId: %d\n", victimBCB.getFrameId(), victimBCB.getPageId());
             hashBucket.appendBCB(victimBCB);
@@ -205,34 +208,56 @@ public class BMgr {
     }
 
     /**
-     *
      * @return 被淘汰的页面存放的帧号frameId
      */
-    public int selectVictim() {
-        //LRU策略选择尾部结点作为victimBCB
-        BCB victimBCB = this.tail.getPre();
-        if (victimBCB.getDirty() == 1) {
-            this.writeDirtys();
-        }
-        return victimBCB.getFrameId();
+    public int selectVictim() throws Exception {
+        return this.removeLRUEle();
     }
 
     public int hash(int pageId) {
         return pageId % bufSize;
     }
 
-    public void removeBCB(int pageId) {
+    public void removeBCB(int pageId) throws Exception {
+        Bucket hashBucket = this.p2f[this.hash(pageId)];
+        if (hashBucket == null) {
+            throw new Exception("哈希桶不存在，代码出错啦！");
+        }
+        if (this.p2f[this.hash(pageId)].searchPage(pageId) == null) {
+            throw new Exception("找不到要删除的页，代码出错啦！");
+        }
 
+        for (Bucket curBucket = hashBucket; curBucket != null; curBucket = curBucket.getNext()) {
+            for (int i = 0; i < curBucket.getBcbNum(); i++) {
+                if (curBucket.getBcbList().get(i).getPageId() == pageId) {
+                    curBucket.getBcbList().remove(i);
+//                    System.out.println(curBucket);
+                    for (Bucket curBucket1 = curBucket; curBucket1 != null; curBucket1 = curBucket1.getNext()) {
+                        if (curBucket1.getNext() != null) {
+                            //将下个桶中的首元素加入当前桶
+                            curBucket1.getBcbList().add(curBucket1.getNext().getBcbList().get(0));
+                            //删除下个桶的首元素
+                            curBucket1.getNext().getBcbList().remove(0);
+                            //如果下个桶空则删除桶
+                            if (curBucket1.getNext().getBcbNum() == 0) {
+                                curBucket1.setNext(null);
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+        }
     }
 
-    public void removeLRUEle() {
-        //将LRU链表里的队尾元素移至队首
-        head.setPre(tail);
-        tail.setNext(head);
-        head = tail;
-        tail = tail.getPre();
-        head.setPre(null);
-        tail.setNext(null);
+    public int removeLRUEle() throws Exception {
+        //LRU策略选择尾部结点作为victimBCB
+        BCB victimBCB = this.tail.getPre();
+        if (victimBCB.getDirty() == 1) {
+            this.writeDirtys();
+        }
+        this.removeBCB(victimBCB.getPageId());
+        return victimBCB.getFrameId();
     }
 
     public void writeDirtys() {

@@ -26,7 +26,7 @@ class BucketTest {
 //        BCB resBCB = buckets[0].searchPage(19);
 //        System.out.println(resBCB);
         buckets[3].printBucket();
-        buckets[3].removeBCB(buckets[3].searchPage(7));
+//        buckets[3].removeBCB(buckets[3].searchPage(7));//这个方法不用来，再见！
         buckets[3].printBucket();
     }
 }
