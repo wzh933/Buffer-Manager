@@ -1,6 +1,6 @@
 package cs.adb.wzh.mainTest;
 
-import cs.adb.wzh.utils.pageRecordReader;
+import cs.adb.wzh.utils.PageRequestReader;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -12,7 +12,7 @@ import java.io.IOException;
 public class MainTest {
     @Test
     void mainTest() throws IOException {
-        pageRecordReader prr = new pageRecordReader("src/main/resources/testTxt1.txt");
+        PageRequestReader prr = new PageRequestReader("src/main/resources/testTxt1.txt");
 
     }
 }

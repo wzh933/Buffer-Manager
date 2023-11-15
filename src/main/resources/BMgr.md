@@ -10,11 +10,11 @@
 
 这个函数的原型是FixNewPage（），它返回一个page_id和一个frame_id。当插入、索引拆分或创建对象时需要一个新页面时，使用这个函数。返回page_id以便分配给record_id和元数据。此函数将找到一个空页面，文件和访问管理器可以使用它来存储一些数据。
 
-***UnfixPage(int page_id)***
+* ***UnfixPage(int page_id)***
 
 这个函数的原型是UnfixPage（page_id），它返回一个frame_id。这个函数是对FixPage或FixNewPage调用的补充。此函数递减帧上的修复计数。如果计数减少到零，则页面上的闩锁被移除，并且如果选择，则可以移除帧。page_id被转换为frame_id，并且它可以被解锁，使得如果页面上的计数已经减少到零，则它可以被选择为受害页面。
 
-***NumFreeFrames()***
+* ***NumFreeFrames()***
 
 NumFreeFrames函数查看缓冲区，并返回可用的缓冲区页数。这对于查询处理器的N路排序特别有用。该函数的原型看起来像NumFreeFrames（），并返回从0到BUFFERSIZE-1（1023）的整数。
 

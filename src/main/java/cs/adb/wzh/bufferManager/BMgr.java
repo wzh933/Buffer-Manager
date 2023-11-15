@@ -7,7 +7,6 @@ import cs.adb.wzh.Storage.Buffer;
 
 import cs.adb.wzh.bufferControlBlocks.BCB;
 import cs.adb.wzh.dataStorageManager.DSMgr;
-import cs.adb.wzh.utils.pageRecordReader;
 
 import java.io.IOException;
 
@@ -26,6 +25,7 @@ public class BMgr {
     private int freePageNum;
     private final Buffer bf;
     private final Disk disk;
+    private double hitNum = 0;
 //    private BCB freePageTail;
 
     //对页面的读写操作(operation, pageId)
@@ -110,21 +110,19 @@ public class BMgr {
      * @return frameId:页面pageId被固定于缓存区的帧号
      */
     public int fixPage(int pageId) throws Exception {
-//        System.out.println(pageId);
         Page page = this.dsMgr.readPage(pageId);
         if (this.p2f[this.hash(pageId)] == null) {//如果pageId对应的hash桶是空的则新建桶
             this.p2f[this.hash(pageId)] = new Bucket();
         }
         Bucket hashBucket = this.p2f[this.hash(pageId)];//找到pageId可能存放的hash桶
-//        System.out.println(pageId);
         BCB targetBCB = hashBucket.searchPage(pageId);//寻找hash桶中的页面
         if (targetBCB != null) {
             /*
             如果该页面存放在缓存区中
-            那么将该页面置于循环链表的首部
+            那么命中次数加一
+            同时将该页面置于循环链表的首部
              */
-//            System.out.println(targetBCB.getPageId());
-//            System.out.println();
+            this.hitNum++;
             this.move2Head(targetBCB);
             return targetBCB.getFrameId();
         }
@@ -141,26 +139,19 @@ public class BMgr {
             6、将帧frameId中的内容写入页面pageId中
          */
         int frameId;
-//        System.out.println(freePageNum);
         if (this.freePageNum > 0) {
             frameId = this.bufSize - this.freePageNum;
-//            System.out.println(frameId);
             BCB freeBCB = this.bcbTable[frameId];
             freeBCB.setPageId(pageId);
             this.move2Head(freeBCB);
-//            System.out.println(this.getHead().getFrameId());
             this.freePageNum--;
             this.p2f[this.hash(freeBCB.getPageId())].appendBCB(freeBCB);
         } else {
             frameId = this.selectVictim();
             BCB victimBCB = this.bcbTable[frameId];
-//            System.out.println(frameId);
-//            System.out.println(bcbTable[frameId].getFrameId());
-//            System.out.println(this.hash(victimBCB.getPageId()));
             this.p2f[this.hash(victimBCB.getPageId())].removeBCB(victimBCB);
             victimBCB.setPageId(pageId);
-            System.out.printf("frameId:%d, pageId:%d\n", victimBCB.getFrameId(), victimBCB.getPageId());
-//            System.out.println(pageId);
+//            System.out.printf("frameId: %d, pageId: %d\n", victimBCB.getFrameId(), victimBCB.getPageId());
             hashBucket.appendBCB(victimBCB);
             this.move2Head(victimBCB);
             this.bf.getBuf()[frameId].setField(page.getField());
@@ -213,6 +204,10 @@ public class BMgr {
         return freePageNum;
     }
 
+    /**
+     *
+     * @return 被淘汰的页面存放的帧号frameId
+     */
     public int selectVictim() {
         //LRU策略选择尾部结点作为victimBCB
         BCB victimBCB = this.tail.getPre();
@@ -226,11 +221,11 @@ public class BMgr {
         return pageId % bufSize;
     }
 
-    void removeBCB(int pageId) {
+    public void removeBCB(int pageId) {
 
     }
 
-    void removeLRUEle() {
+    public void removeLRUEle() {
         //将LRU链表里的队尾元素移至队首
         head.setPre(tail);
         tail.setNext(head);
@@ -240,9 +235,18 @@ public class BMgr {
         tail.setNext(null);
     }
 
-    void writeDirtys() {
+    public void writeDirtys() {
 
     }
 
+    public void printBuffer() {
+        for (BCB p = this.head; p.getFrameId() != -1; p = p.getNext()) {
+            System.out.printf("%d, ", p.getPageId());
+        }
+        System.out.println();
+    }
 
+    public double getHitNum() {
+        return hitNum;
+    }
 }

@@ -3,6 +3,7 @@ package cs.adb.wzh.bufferManager;
 import cs.adb.wzh.Storage.Buffer;
 import cs.adb.wzh.Storage.Disk;
 import cs.adb.wzh.bufferControlBlocks.BCB;
+import cs.adb.wzh.utils.PageRequestReader;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -55,7 +56,7 @@ class BMgrTest {
 
     @Test
     void fixPageTest() throws Exception {
-        Buffer bf = new Buffer(8);
+        Buffer bf = new Buffer();
         Disk disk = new Disk();
         BMgr bMgr = new BMgr(bf, disk);
 /*
@@ -66,18 +67,22 @@ class BMgrTest {
         bMgr.fixNewPage();
         bMgr.fixPage(10);
 */
-        int fileLength = 50;
+        int fileLength = 50000;
         int[] pageIds = new int[fileLength];
         for (int i = 0; i < fileLength; i++) {
             pageIds[i] = bMgr.fixNewPage();
-//            System.out.println(pageIds[i]);
         }
-//        System.out.println();
-        for (int i = 0; i < fileLength; i++) {
-//            System.out.println(pageIds[i]);
-            bMgr.fixPage(pageIds[i]);
-//            System.out.println(bMgr.fixPage(pageIds[i]));
+
+//        PageRequestReader prr = new PageRequestReader("src/main/resources/testTxt2.txt");
+        PageRequestReader prr = new PageRequestReader("src/main/resources/data-5w-50w-zipf.txt");
+
+
+        for (int i = 0; i < prr.getRequestNum(); i++) {
+            bMgr.fixPage(prr.getPageId(i));
+//            bMgr.printBuffer();
         }
-//        System.out.println(bMgr.getTail().getPre().getFrameId());
+        System.out.printf("%.3f%%", bMgr.getHitNum() / prr.getRequestNum() * 100);
     }
+
+
 }

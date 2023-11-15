@@ -8,12 +8,12 @@ import java.io.IOException;
  * @author Wang Zihui
  * @date 2023/11/13
  **/
-class PageRecordReaderTest {
+class PageRequestReaderTest {
 
     @Test
     void pageRecordReaderTest() throws IOException {
-        pageRecordReader prr = new pageRecordReader("src/main/resources/testTxt1.txt");
-        for (int i = 0; i < prr.getRecordNum(); i++) {
+        PageRequestReader prr = new PageRequestReader("src/main/resources/testTxt1.txt");
+        for (int i = 0; i < prr.getRequestNum(); i++) {
             System.out.printf("%d, %d\n", prr.getPageId(i), prr.getOperation(i));
         }
     }
