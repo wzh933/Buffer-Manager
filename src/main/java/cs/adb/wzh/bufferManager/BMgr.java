@@ -32,6 +32,7 @@ public class BMgr {
     private double hitNum = 0;
     private int operation;//0-读 1-写
 //    private BCB freePageTail;
+//试试github
 
     //对页面的读写操作(operation, pageId)
 //    private final pageRecordReader pageRecords;
