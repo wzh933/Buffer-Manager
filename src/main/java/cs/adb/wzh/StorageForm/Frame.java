@@ -6,7 +6,7 @@ package cs.adb.wzh.StorageForm;
  **/
 public class Frame {
     private final int FRAME_SIZE = 4096;
-    private char[] field;
+    private final char[] field;
 
     public int getFrameSize() {
         return FRAME_SIZE;

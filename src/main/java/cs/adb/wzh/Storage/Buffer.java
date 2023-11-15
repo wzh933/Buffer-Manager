@@ -1,6 +1,7 @@
 package cs.adb.wzh.Storage;
 
 import cs.adb.wzh.StorageForm.Frame;
+import cs.adb.wzh.StorageForm.Page;
 
 /**
  * @author Wang Zihui
@@ -23,6 +24,10 @@ public class Buffer {
         final int DEF_BUF_SIZE = 1024;
         this.bufSize = DEF_BUF_SIZE;
         this.buf = new Frame[DEF_BUF_SIZE];
+        //初始化帧缓存区
+        for (int i = 0; i < this.bufSize; i++) {
+            this.buf[i] = new Frame();
+        }
     }
 
     /**
@@ -34,6 +39,18 @@ public class Buffer {
         }
         this.bufSize = bufSize;
         this.buf = new Frame[bufSize];
+        //初始化帧缓存区
+        for (int i = 0; i < this.bufSize; i++) {
+            this.buf[i] = new Frame();
+        }
+    }
+
+    public Frame readFrame(int frameId) {
+        return buf[frameId];
+    }
+
+    public void writeFrame(Page page, int frameId) {
+        //先不进行任何操作
     }
 
 }

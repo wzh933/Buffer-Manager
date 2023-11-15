@@ -15,16 +15,16 @@ import java.io.IOException;
  * @date 2023/11/12
  **/
 public class BMgr {
-    private DSMgr dsMgr;
-    private int[] f2p;
-    private Bucket[] p2f;
+    private final DSMgr dsMgr;
+    private final int[] f2p;
+    private final Bucket[] p2f;
     private BCB head;
     private BCB tail;
-    private BCB[] bcbTable;
+    private final BCB[] bcbTable;
     private final int bufSize;
-    private int freePageNum;
+    private final int freePageNum;
     //维护一个空闲页链表的头指针
-    private BCB freePageHead;
+    private final BCB freePageHead;
 //    private BCB freePageTail;
 
     //对页面的读写操作(operation, pageId)
@@ -35,7 +35,7 @@ public class BMgr {
         this.bufSize = bf.getBufSize();
         this.freePageNum = bufSize;
 
-        this.dsMgr = new DSMgr(disk);
+        this.dsMgr = new DSMgr(bf, disk);
 
 //        this.pageRecords = new pageRecordReader(pageRequestsFilePath);
 
@@ -150,10 +150,11 @@ public class BMgr {
         先在被固定的页面中搜索可用位为0的页面
         如果找到被固定页面中的可用页面pageId
         那么该页面pageId将被重用
-        937421896@qq.com
+        同时置该页面的使用位为1
          */
         for (int pageId = 0; pageId < dsMgr.getNumPages(); pageId++) {
             if (dsMgr.getUse(pageId) == 0) {
+                dsMgr.setUse(pageId, 1);
                 return pageId;
             }
         }
