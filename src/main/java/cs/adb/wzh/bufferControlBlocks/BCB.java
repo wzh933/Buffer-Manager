@@ -10,6 +10,7 @@ public class BCB {
     private int latch;
     private int count;
     private int dirty = 0;
+    private int referenced = 1;
     private BCB next;
     private BCB pre;
 
@@ -39,6 +40,9 @@ public class BCB {
         this.dirty = dirty;
     }
 
+    public void setReferenced(int referenced) {
+        this.referenced = referenced;
+    }
 
     public BCB getNext() {
         return next;
@@ -61,5 +65,7 @@ public class BCB {
         return dirty;
     }
 
-
+    public int getReferenced() {
+        return referenced;
+    }
 }

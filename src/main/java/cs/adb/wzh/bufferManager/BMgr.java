@@ -32,11 +32,13 @@ public class BMgr {
     private double hitNum = 0;
     private int operation;//0-读 1-写
 //    private BCB freePageTail;
-//试试github
 
     //对页面的读写操作(operation, pageId)
 //    private final pageRecordReader pageRecords;
 
+    private BCB clockSentinel;//维护一个时钟哨兵
+    private boolean useLRU = true;//默认使用LRU置换策略
+    private boolean cleanFirst = false;//默认不是cleanFirst策略
 
     public BMgr(Buffer bf, Disk disk) throws IOException {
         this.bf = bf;
@@ -71,6 +73,8 @@ public class BMgr {
         //让无效结点作为尾部结点
         this.head = this.head.getNext();
         this.tail = this.tail.getNext();
+        //开始时时钟哨兵指向循环双向链表中最后一个结点
+        this.clockSentinel = this.tail.getPre();
     }
 
     public BCB getHead() {
@@ -95,6 +99,7 @@ public class BMgr {
              */
             return;
         }
+        //这样写代码舒服多了
         bcb.getPre().setNext(bcb.getNext());
         bcb.getNext().setPre(bcb.getPre());
         bcb.setPre(this.tail);
@@ -105,6 +110,7 @@ public class BMgr {
     }
 
 
+/*
     /**
      * 文件和访问管理器将使用记录的record_id中的page_id调用这个页面
      * 该函数查看页面是否已经在缓冲区中
@@ -113,7 +119,7 @@ public class BMgr {
      *
      * @param pageId:需要被固定于缓存区的页号
      * @return frameId:页面pageId被固定于缓存区的帧号
-     */
+     * /
     public int fixPage(int pageId) throws Exception {
         int frameId = this.fixPageLRU(pageId);//可以切换不同的策略进行页面的置换
         this.bcbTable[frameId].setDirty(operation);//如果是写操作则将脏位设置为1(0-读 1-写)
@@ -171,9 +177,10 @@ public class BMgr {
 //            this.bf.getBuf()[frameId].setField(page.getField());
         }
         return frameId;
-*/
+* /
 
     }
+*/
 
 
     /**
@@ -210,7 +217,16 @@ public class BMgr {
         return allocPageId;
     }
 
-    private int fixPageLRU(int pageId) throws Exception {
+    /**
+     * 文件和访问管理器将使用记录的record_id中的page_id调用这个页面
+     * 该函数查看页面是否已经在缓冲区中
+     * 如果是，则返回相应的frame_id
+     * 如果页面尚未驻留在缓冲区中，则它会选择牺牲页面（如果需要），并加载所请求的页面。
+     *
+     * @param pageId:需要被固定于缓存区的页号
+     * @return frameId:页面pageId被固定于缓存区的帧号
+     */
+    public int fixPage(int pageId) throws Exception {
         if (this.p2f[this.hash(pageId)] == null) {//如果pageId对应的hash桶是空的则新建桶
             this.p2f[this.hash(pageId)] = new Bucket();
         }
@@ -220,10 +236,13 @@ public class BMgr {
             /*
             如果该页面存放在缓存区中
             那么命中次数加一
-            同时将该页面置于循环链表的首部
+            如果采用LRU策略则将该页面置于循环链表的首部
              */
             this.hitNum++;
-            this.move2Head(targetBCB);
+            targetBCB.setDirty(this.operation);//如果是写操作则将脏位设置为1(0-读 1-写)
+            if (this.useLRU) {
+                this.move2Head(targetBCB);
+            }
             return targetBCB.getFrameId();
         }
 
@@ -260,6 +279,7 @@ public class BMgr {
 
 //            this.bf.getBuf()[frameId].setField(page.getField());
         }
+        this.bcbTable[frameId].setDirty(operation);//如果是写操作则将脏位设置为1(0-读 1-写)
         return frameId;
     }
 
@@ -275,15 +295,18 @@ public class BMgr {
     /**
      * @return 被淘汰的页面存放的帧号frameId
      */
-    public int selectVictim() throws Exception {
-        return this.removeLRUEle();
+    private int selectVictim() throws Exception {
+        if (this.useLRU) {
+            return this.removeLRUEle();
+        }
+        return this.removeCLOCKEle();
     }
 
-    public int hash(int pageId) {
+    private int hash(int pageId) {
         return pageId % bufSize;
     }
 
-    public void removeBCB(int pageId) throws Exception {
+    private void removeBCB(int pageId) throws Exception {
         Bucket hashBucket = this.p2f[this.hash(pageId)];
         if (hashBucket == null) {
             throw new Exception("哈希桶不存在，代码出错啦！");
@@ -315,7 +338,7 @@ public class BMgr {
         }
     }
 
-    public int removeLRUEle() throws Exception {
+    private int removeLRUEle() throws Exception {
         //LRU策略选择尾部结点作为victimBCB
         BCB victimBCB = this.tail.getPre();
         //从hash表中删除BCB并在之后建立新的索引
@@ -324,6 +347,20 @@ public class BMgr {
         this.move2Head(victimBCB);
         return victimBCB.getFrameId();
     }
+
+    private int removeCLOCKEle() {
+        BCB curBCB = this.clockSentinel;
+        for (; curBCB.getReferenced() != 0; curBCB = curBCB.getNext()) {
+            if (curBCB.getFrameId() == -1) {//遇到无效节点则不进行任何操作
+                continue;
+            }
+            curBCB.setReferenced(0);
+        }
+        this.clockSentinel = curBCB;
+        this.clockSentinel.setReferenced(1);
+        return this.clockSentinel.getFrameId();
+    }
+
 
     public void writeDirtys() {
         /*
@@ -343,6 +380,10 @@ public class BMgr {
             System.out.printf("%d, ", p.getPageId());
         }
         System.out.println();
+    }
+
+    public void setUseLRU(boolean useLRU) {
+        this.useLRU = useLRU;
     }
 
     public double getHitNum() {

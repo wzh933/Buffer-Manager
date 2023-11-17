@@ -59,6 +59,7 @@ class BMgrTest {
         Buffer bf = new Buffer();
         Disk disk = new Disk();
         BMgr bMgr = new BMgr(bf, disk);
+        bMgr.setUseLRU(false);
 /*
         //这样就会有”当前磁盘已满，无法分配新页面！“的警告
         for (int i = 0; i < 65537; i++) {
