@@ -38,7 +38,6 @@ public class BMgr {
 
     private BCB clockSentinel;//维护一个时钟哨兵
     private boolean useLRU = true;//默认使用LRU置换策略
-    private boolean cleanFirst = false;//默认不是cleanFirst策略
 
     public BMgr(Buffer bf, Disk disk) throws IOException {
         this.bf = bf;
