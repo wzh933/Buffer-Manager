@@ -256,7 +256,9 @@ public class BMgr {
             5、将victimBCB移到首部
             6、如果该帧脏位为1，则将帧frameId中的内容写入页面pageId中
          */
-        Page page = this.dsMgr.readPage(pageId);
+        if (this.operation == 0) {
+            this.dsMgr.readPage(pageId);
+        }
         int frameId;
         if (this.freePageNum > 0) {
             frameId = this.bufSize - this.freePageNum;
