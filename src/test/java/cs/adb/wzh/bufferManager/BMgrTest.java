@@ -4,6 +4,7 @@ import cs.adb.wzh.Storage.Buffer;
 import cs.adb.wzh.Storage.Disk;
 import cs.adb.wzh.bufferControlBlocks.BCB;
 import cs.adb.wzh.utils.PageRequestReader;
+import cs.adb.wzh.utils.SwapMethod;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -59,8 +60,7 @@ class BMgrTest {
         Buffer bf = new Buffer();
         Disk disk = new Disk();
         BMgr bMgr = new BMgr(bf, disk);
-//        bMgr.setUseLRU(true);
-        bMgr.setUseCLOCK(true);
+        bMgr.setSwapMethod(SwapMethod.CLOCK);
 
 /*
         //这样就会有”当前磁盘已满，无法分配新页面！“的警告

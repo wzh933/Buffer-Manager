@@ -6,6 +6,7 @@ import cs.adb.wzh.Storage.Buffer;
 
 import cs.adb.wzh.bufferControlBlocks.BCB;
 import cs.adb.wzh.dataStorageManager.DSMgr;
+import cs.adb.wzh.utils.SwapMethod;
 
 import java.io.IOException;
 
@@ -38,6 +39,7 @@ public class BMgr {
     private BCB clockSentinel;//维护一个时钟哨兵
     private boolean useLRU = false;
     private boolean useCLOCK = false;
+    private SwapMethod swapMethod;
 
     public BMgr(Buffer bf, Disk disk) throws IOException {
         this.bf = bf;
@@ -239,7 +241,7 @@ public class BMgr {
              */
             this.hitNum++;
             targetBCB.setDirty(this.operation);//如果是写操作则将脏位设置为1(0-读 1-写)
-            if (this.useLRU) {
+            if (this.swapMethod == SwapMethod.LRU) {//如果使用LRU置换算法则将命中页面移动至首部
                 this.move2Head(targetBCB);
             }
             targetBCB.setReferenced(1);
@@ -298,11 +300,11 @@ public class BMgr {
      * @return 被淘汰的页面存放的帧号frameId
      */
     private int selectVictim() throws Exception {
-        int victimFrame = 0;
-        if (this.useLRU) {
-            victimFrame = removeLRUEle();
-        } else if (this.useCLOCK) {
-            victimFrame = removeCLOCKEle();
+        int victimFrame;
+        switch (swapMethod) {
+            case LRU -> victimFrame = removeLRUEle();
+            case CLOCK -> victimFrame = removeCLOCKEle();
+            default -> victimFrame = this.tail.getPre().getFrameId();
         }
         return victimFrame;
     }
@@ -393,6 +395,10 @@ public class BMgr {
 
     public void setUseCLOCK(boolean useCLOCK) {
         this.useCLOCK = useCLOCK;
+    }
+
+    public void setSwapMethod(SwapMethod swapMethod) {
+        this.swapMethod = swapMethod;
     }
 
     public double getHitNum() {
