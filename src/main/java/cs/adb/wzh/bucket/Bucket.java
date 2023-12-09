@@ -22,6 +22,8 @@ public class Bucket {
     }
 
     /**
+     * 挺好用的
+     *
      * @param bcb:将要加入桶的BCB块
      */
     public void appendBCB(BCB bcb) {

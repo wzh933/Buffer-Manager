@@ -59,7 +59,9 @@ class BMgrTest {
         Buffer bf = new Buffer();
         Disk disk = new Disk();
         BMgr bMgr = new BMgr(bf, disk);
-//        bMgr.setUseLRU(false);
+//        bMgr.setUseLRU(true);
+        bMgr.setUseCLOCK(true);
+
 /*
         //这样就会有”当前磁盘已满，无法分配新页面！“的警告
         for (int i = 0; i < 65537; i++) {
@@ -87,6 +89,14 @@ class BMgrTest {
         System.out.printf("%.3f%%\n", bMgr.getHitNum() / prr.getRequestNum() * 100);
         System.out.printf("读磁盘次数：%d\n", bMgr.getReadDiskNum());
         System.out.printf("写磁盘次数：%d\n", bMgr.getWriteDiskNum());
+    }
+
+    @Test
+    void testNewPlugin() {
+        System.out.println("wzh");//我觉得这插件挺酷的
+        /*
+        哈哈哈
+         */
     }
 
 

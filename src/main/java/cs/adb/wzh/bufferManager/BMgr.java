@@ -1,7 +1,6 @@
 package cs.adb.wzh.bufferManager;
 
 import cs.adb.wzh.Storage.Disk;
-import cs.adb.wzh.StorageForm.Page;
 import cs.adb.wzh.bucket.Bucket;
 import cs.adb.wzh.Storage.Buffer;
 
@@ -37,7 +36,8 @@ public class BMgr {
 //    private final pageRecordReader pageRecords;
 
     private BCB clockSentinel;//维护一个时钟哨兵
-    private boolean useLRU = true;//默认使用LRU置换策略
+    private boolean useLRU = false;
+    private boolean useCLOCK = false;
 
     public BMgr(Buffer bf, Disk disk) throws IOException {
         this.bf = bf;
@@ -242,6 +242,7 @@ public class BMgr {
             if (this.useLRU) {
                 this.move2Head(targetBCB);
             }
+            targetBCB.setReferenced(1);
             return targetBCB.getFrameId();
         }
 
@@ -297,10 +298,13 @@ public class BMgr {
      * @return 被淘汰的页面存放的帧号frameId
      */
     private int selectVictim() throws Exception {
+        int victimFrame = 0;
         if (this.useLRU) {
-            return this.removeLRUEle();
+            victimFrame = removeLRUEle();
+        } else if (this.useCLOCK) {
+            victimFrame = removeCLOCKEle();
         }
-        return this.removeCLOCKEle();
+        return victimFrame;
     }
 
     private int hash(int pageId) {
@@ -385,6 +389,10 @@ public class BMgr {
 
     public void setUseLRU(boolean useLRU) {
         this.useLRU = useLRU;
+    }
+
+    public void setUseCLOCK(boolean useCLOCK) {
+        this.useCLOCK = useCLOCK;
     }
 
     public double getHitNum() {
