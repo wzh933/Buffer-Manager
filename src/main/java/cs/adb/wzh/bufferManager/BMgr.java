@@ -37,8 +37,8 @@ public class BMgr {
 //    private final pageRecordReader pageRecords;
 
     private BCB clockSentinel;//维护一个时钟哨兵
-    private boolean useLRU = false;
-    private boolean useCLOCK = false;
+    //    private boolean useLRU = false;
+//    private boolean useCLOCK = false;
     private SwapMethod swapMethod;
 
     public BMgr(Buffer bf, Disk disk) throws IOException {
@@ -268,6 +268,7 @@ public class BMgr {
             this.move2Head(freeBCB);
             //让时钟哨兵指向循环双向链表中的最后一个结点
             this.clockSentinel = this.tail.getPre();
+//            this.clockSentinel = this.head;
             this.freePageNum--;
             this.p2f[this.hash(freeBCB.getPageId())].appendBCB(freeBCB);
         } else {
@@ -356,16 +357,19 @@ public class BMgr {
     }
 
     private int removeCLOCKEle() {
-        BCB curBCB = this.clockSentinel;
-        for (; curBCB.getReferenced() != 0; curBCB = curBCB.getNext()) {
-            if (curBCB.getFrameId() == -1) {//遇到无效节点则不进行任何操作
+        for (; this.clockSentinel.getReferenced() != 0; this.clockSentinel = this.clockSentinel.getNext()) {
+            if (this.clockSentinel.getFrameId() == -1) {//遇到无效节点则不进行任何操作
                 continue;
             }
-            curBCB.setReferenced(0);
+            this.clockSentinel.setReferenced(0);
         }
-        this.clockSentinel = curBCB;
         this.clockSentinel.setReferenced(1);
-        return this.clockSentinel.getFrameId();
+        int resFrameId = this.clockSentinel.getFrameId();
+        this.clockSentinel = this.clockSentinel.getNext();
+        if (this.clockSentinel.getFrameId() == -1) {
+            this.clockSentinel = this.clockSentinel.getNext();
+        }
+        return resFrameId;
     }
 
 
@@ -389,13 +393,13 @@ public class BMgr {
         System.out.println();
     }
 
-    public void setUseLRU(boolean useLRU) {
-        this.useLRU = useLRU;
-    }
-
-    public void setUseCLOCK(boolean useCLOCK) {
-        this.useCLOCK = useCLOCK;
-    }
+//    public void setUseLRU(boolean useLRU) {
+//        this.useLRU = useLRU;
+//    }
+//
+//    public void setUseCLOCK(boolean useCLOCK) {
+//        this.useCLOCK = useCLOCK;
+//    }
 
     public void setSwapMethod(SwapMethod swapMethod) {
         this.swapMethod = swapMethod;
