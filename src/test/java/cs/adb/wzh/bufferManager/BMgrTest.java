@@ -61,6 +61,7 @@ class BMgrTest {
         Disk disk = new Disk();
         BMgr bMgr = new BMgr(bf, disk);
         bMgr.setSwapMethod(SwapMethod.CLOCK);
+//        bMgr.setSwapMethod(SwapMethod.LRU);
 
 /*
         //这样就会有”当前磁盘已满，无法分配新页面！“的警告
@@ -87,6 +88,7 @@ class BMgrTest {
         }
         bMgr.writeDirtys();
         System.out.printf("%.3f%%\n", bMgr.getHitNum() / prr.getRequestNum() * 100);
+        System.out.println(bMgr.getHitNum());
         System.out.printf("读磁盘次数：%d\n", bMgr.getReadDiskNum());
         System.out.printf("写磁盘次数：%d\n", bMgr.getWriteDiskNum());
     }

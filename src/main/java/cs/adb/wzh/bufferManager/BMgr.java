@@ -74,8 +74,6 @@ public class BMgr {
         //让无效结点作为尾部结点
         this.head = this.head.getNext();
         this.tail = this.tail.getNext();
-        //开始时时钟哨兵指向循环双向链表中最后一个结点
-        this.clockSentinel = this.tail.getPre();
     }
 
     public BCB getHead() {
@@ -268,6 +266,8 @@ public class BMgr {
             BCB freeBCB = this.bcbTable[frameId];
             freeBCB.setPageId(pageId);
             this.move2Head(freeBCB);
+            //让时钟哨兵指向循环双向链表中的最后一个结点
+            this.clockSentinel = this.tail.getPre();
             this.freePageNum--;
             this.p2f[this.hash(freeBCB.getPageId())].appendBCB(freeBCB);
         } else {
